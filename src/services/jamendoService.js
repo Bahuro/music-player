@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const JAMENDO_API_URL = 'https://api.jamendo.com/v3.0';
-// Use the client ID from environment variables
+// Get the Client ID from environment variables
 const CLIENT_ID = import.meta.env.VITE_JAMENDO_CLIENT_ID;
 
 const api = axios.create({
