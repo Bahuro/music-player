@@ -42,12 +42,21 @@ const setupAudio = () => {
   if (sound.value) {
     sound.value.unload();
   }
-
+  
+  console.log('Setting up audio for track:', currentTrack.value.title, 'URL:', currentTrack.value.url);
+  
+  // Verify URL is valid
+  if (!currentTrack.value.url) {
+    console.error('URL de audio no válida');
+    return;
+  }
+  
   sound.value = new Howl({
     src: [currentTrack.value.url],
     html5: true,
     volume: volume.value,
-    format: ['mp3'],
+    format: ['mp3', 'mp32', 'ogg'],
+    preload: true,
     onplay: () => {
       isPlaying.value = true;
       playerStore.isPlaying = true;
@@ -66,12 +75,35 @@ const setupAudio = () => {
     },
     onload: () => {
       duration.value = sound.value.duration();
+      console.log('Audio loaded successfully:', currentTrack.value.url);
     },
     onloaderror: (id, error) => {
-      console.error('Error loading audio:', error);
+      console.error('Error loading audio:', error, 'URL:', currentTrack.value.url);
+      // Try to reload with a different format
+      if (currentTrack.value.url.includes('mp32')) {
+        const newUrl = currentTrack.value.url.replace('mp32', 'mp3');
+        console.log('Trying alternative URL format:', newUrl);
+        sound.value.unload();
+        sound.value = new Howl({
+          src: [newUrl],
+          html5: true,
+          volume: volume.value,
+          format: ['mp3', 'ogg'],
+          onload: () => {
+            duration.value = sound.value.duration();
+            console.log('Alternative format loaded successfully');
+            if (isPlaying.value) {
+              sound.value.play();
+            }
+          },
+          onloaderror: () => {
+            console.error('Failed to load alternative format');
+          }
+        });
+      }
     }
   });
-
+  
   if (isPlaying.value) {
     sound.value.play();
   }
@@ -371,6 +403,7 @@ watch(volume, (newVolume) => {
         width: 100px;
         height: 4px;
         -webkit-appearance: none;
+        appearance: none;
         background: var(--border-color);
         border-radius: 2px;
         outline: none;
